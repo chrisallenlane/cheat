@@ -2,6 +2,7 @@ cheat
 =====
 
 [![Build Status](https://travis-ci.com/cheat/cheat.svg?branch=master)](https://travis-ci.com/cheat/cheat)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fchrisallenlane%2Fcheat.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fchrisallenlane%2Fcheat?ref=badge_shield)
 
 `cheat` allows you to create and view interactive cheatsheets on the
 command-line. It was designed to help remind \*nix system administrators of
@@ -211,3 +212,7 @@ Additionally, `cheat` supports enhanced autocompletion via integration with
 [cheatsheets]: https://github.com/cheat/cheatsheets
 [completions]: https://github.com/cheat/cheat/tree/master/scripts
 [fzf]:         https://github.com/junegunn/fzf
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fchrisallenlane%2Fcheat.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fchrisallenlane%2Fcheat?ref=badge_large)
