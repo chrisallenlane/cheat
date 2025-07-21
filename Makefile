@@ -212,6 +212,13 @@ coverage:
 	 open .tmp/cheat-coverage.html 2>/dev/null || \
 	 echo "Please open .tmp/cheat-coverage.html in your browser")
 
+## coverage-text: show test coverage by function in terminal
+.PHONY: coverage-text
+coverage-text:
+	$(MKDIR) .tmp && \
+	$(GO) test ./... -coverprofile=.tmp/cheat-coverage.out && \
+	$(GO) tool cover -func=.tmp/cheat-coverage.out | $(SORT) -k3 -n
+
 ## check: format, lint, vet, vendor, and run unit-tests
 .PHONY: check
 check: | vendor fmt lint vet test
