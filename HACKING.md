@@ -1,57 +1,217 @@
-Hacking
-=======
-The following is a quickstart guide for developing `cheat`.
+# Hacking Guide
 
-## 1. Install system dependencies
-Before you begin, you must install a handful of system dependencies. The
-following are required, and must be available on your `PATH`:
+This document provides a comprehensive guide for developing `cheat`, including setup, architecture overview, and code patterns.
 
+## Quick Start
+
+### 1. Install system dependencies
+
+The following are required and must be available on your `PATH`:
 - `git`
-- `go` (>= 1.17 is recommended)
+- `go` (>= 1.19 is recommended)
 - `make`
 
-The following dependencies are optional:
+Optional dependencies:
 - `docker`
 - `pandoc` (necessary to generate a `man` page)
 
-## 2. Install utility applications
-Run `make setup` to install `scc` and `revive`, which are used by various
-`make` targets.
+### 2. Install utility applications
+Run `make setup` to install `scc` and `revive`, which are used by various `make` targets.
 
-## 3. Development workflow
-After your environment has been configured, your development workflow will
-resemble the following:
+### 3. Development workflow
 
-1. Make changes to the `cheat` source code.
-2. Run `make test` to run unit-tests.
-3. Fix compiler errors and failing tests as necessary.
-4. Run `make`. A `cheat` executable will be written to the `dist` directory.
-5. Use the new executable by running `dist/cheat <command>`.
-6. Run `make install` to install `cheat` to your `PATH`.
-7. Run `make build-release` to build cross-platform binaries in `dist`.
-8. Run `make clean` to clean the `dist` directory when desired.
+1. Make changes to the `cheat` source code
+2. Run `make test` to run unit-tests
+3. Fix compiler errors and failing tests as necessary
+4. Run `make build`. A `cheat` executable will be written to the `dist` directory
+5. Use the new executable by running `dist/cheat <command>`
+6. Run `make install` to install `cheat` to your `PATH`
+7. Run `make build-release` to build cross-platform binaries in `dist`
+8. Run `make clean` to clean the `dist` directory when desired
 
 You may run `make help` to see a list of available `make` commands.
 
-### Developing with docker
-It may be useful to test your changes within a pristine environment. An
-Alpine-based docker container has been provided for that purpose.
+## Architecture Overview
 
-If you would like to build the docker container, run:
-```sh
+### Package Structure
+
+The `cheat` application follows a clean architecture with well-separated concerns:
+
+- **`cmd/cheat/`**: Command layer with argument parsing and command routing
+- **`internal/config`**: Configuration management (YAML loading, validation, paths)
+- **`internal/cheatpath`**: Cheatsheet path management (collections, filtering)
+- **`internal/sheet`**: Individual cheatsheet handling (parsing, search, highlighting)  
+- **`internal/sheets`**: Collection operations (loading, consolidation, filtering)
+- **`internal/display`**: Output formatting (pager integration, colorization)
+- **`internal/repo`**: Git repository management for community sheets
+
+### Key Design Patterns
+
+- **Filesystem-based storage**: Cheatsheets are plain text files
+- **Override mechanism**: Local sheets override community sheets with same name
+- **Tag system**: Sheets can be categorized with tags in frontmatter
+- **Multiple cheatpaths**: Supports personal, community, and directory-scoped sheets
+
+## Core Types and Functions
+
+### Config (`internal/config`)
+
+The main configuration structure:
+
+```go
+type Config struct {
+    Editor      string        // Editor command (e.g., "vim", "code")
+    Colorize    bool         // Enable syntax highlighting
+    Style       string       // Chroma style (e.g., "monokai")
+    Formatter   string       // Output formatter (e.g., "terminal256")
+    Pager       string       // Pager command (e.g., "less -FRX")
+    Cheatpaths  []Cheatpath  // Configured cheatpaths
+}
+```
+
+Key functions:
+- `New(opts, confPath, validate)` - Load config from file
+- `Validate()` - Validate configuration values
+- `GetEditor()`, `GetPager()` - Get configured or default values
+
+### Cheatpath (`internal/cheatpath`)
+
+Represents a directory containing cheatsheets:
+
+```go
+type Cheatpath struct {
+    Name     string   // Friendly name (e.g., "personal")
+    Path     string   // Filesystem path
+    Tags     []string // Tags applied to all sheets in this path
+    ReadOnly bool     // Whether sheets can be modified
+}
+```
+
+### Sheet (`internal/sheet`)
+
+Represents an individual cheatsheet:
+
+```go
+type Sheet struct {
+    Title    string   // Sheet name (from filename)
+    Path     string   // Full filesystem path
+    Text     string   // Content (without frontmatter)
+    Tags     []string // Combined tags (from frontmatter + cheatpath)
+    Syntax   string   // Syntax for highlighting
+    ReadOnly bool     // Whether sheet can be edited
+}
+```
+
+Key methods:
+- `New(path, tags, readOnly)` - Load from file
+- `Search(regex, inverse)` - Search content
+- `Colorize(conf)` - Apply syntax highlighting
+- `Tagged(tags)` - Check if sheet has any of the given tags
+
+## Common Operations
+
+### Loading and Displaying a Sheet
+
+```go
+// Load sheet
+sheet, err := sheet.New("/path/to/sheet", []string{"personal"}, false)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Apply syntax highlighting
+colorized, err := sheet.Colorize(conf)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Display with pager
+if err := display.Write(colorized, conf); err != nil {
+    log.Fatal(err)
+}
+```
+
+### Working with Sheet Collections
+
+```go
+// Load all sheets from cheatpaths
+allSheets, err := sheets.Load(conf.Cheatpaths)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Consolidate to handle duplicates (precedence rules)
+consolidated := sheets.Consolidate(allSheets)
+
+// Filter by tag
+filtered := sheets.Filter(consolidated, "networking")
+
+// Sort alphabetically
+sheets.Sort(filtered)
+```
+
+### Sheet Format
+
+Cheatsheets are plain text files that may begin with YAML frontmatter:
+
+```yaml
+---
+syntax: bash
+tags: [networking, linux, ssh]
+---
+# Connect to remote server
+ssh user@hostname
+
+# Copy files over SSH
+scp local_file user@hostname:/remote/path
+```
+
+## Testing
+
+Run tests with:
+```bash
+make test           # Run all tests
+make coverage       # Generate coverage report
+go test ./...       # Go test directly
+```
+
+Test files follow Go conventions:
+- `*_test.go` files in same package
+- Table-driven tests for multiple scenarios
+- Mock data in `internal/mock` package
+
+## Error Handling
+
+The codebase follows consistent error handling patterns:
+- Functions return explicit errors
+- Errors are wrapped with context using `fmt.Errorf`
+- User-facing errors are written to stderr
+
+Example:
+```go
+sheet, err := sheet.New(path, tags, false)
+if err != nil {
+    return fmt.Errorf("failed to load sheet: %w", err)
+}
+```
+
+## Developing with Docker
+
+It may be useful to test your changes within a pristine environment. An Alpine-based docker container has been provided for that purpose.
+
+Build the docker container:
+```bash
 make docker-setup
 ```
 
-To shell into the container, run:
-```sh
+Shell into the container:
+```bash
 make docker-sh
 ```
 
 The `cheat` source code will be mounted at `/app` within the container.
 
-If you would like to destroy this container, you may run:
-```sh
+To destroy the container:
+```bash
 make distclean
 ```
-
-[go]: https://go.dev/
