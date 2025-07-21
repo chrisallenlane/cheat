@@ -128,6 +128,7 @@ install: build
 .PHONY: clean
 clean:
 	$(RM) -f $(dist_dir)/* $(cmd_dir)/str_config.go $(cmd_dir)/str_usage.go
+	$(RM) -rf .tmp
 
 ## distclean: remove the tags file
 .PHONY: distclean
@@ -188,8 +189,14 @@ test:
 ## coverage: generate a test coverage report
 .PHONY: coverage
 coverage:
-	$(GO) test ./... -coverprofile=$(TMPDIR)/cheat-coverage.out && \
-	$(GO) tool cover -html=$(TMPDIR)/cheat-coverage.out
+	$(MKDIR) .tmp && \
+	$(GO) test ./... -coverprofile=.tmp/cheat-coverage.out && \
+	$(GO) tool cover -html=.tmp/cheat-coverage.out -o .tmp/cheat-coverage.html && \
+	echo "Coverage report generated: .tmp/cheat-coverage.html" && \
+	(sensible-browser .tmp/cheat-coverage.html 2>/dev/null || \
+	 xdg-open .tmp/cheat-coverage.html 2>/dev/null || \
+	 open .tmp/cheat-coverage.html 2>/dev/null || \
+	 echo "Please open .tmp/cheat-coverage.html in your browser")
 
 ## check: format, lint, vet, vendor, and run unit-tests
 .PHONY: check
