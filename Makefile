@@ -31,6 +31,7 @@ TMPDIR       := /tmp
 # release binaries
 releases :=                        \
 	$(dist_dir)/cheat-darwin-amd64 \
+	$(dist_dir)/cheat-darwin-arm64 \
 	$(dist_dir)/cheat-linux-386    \
 	$(dist_dir)/cheat-linux-amd64  \
 	$(dist_dir)/cheat-linux-arm5   \
@@ -54,6 +55,11 @@ build-release: $(releases)
 # cheat-darwin-amd64
 $(dist_dir)/cheat-darwin-amd64: prepare
 	GOARCH=amd64 GOOS=darwin \
+	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
+
+# cheat-darwin-arm64
+$(dist_dir)/cheat-darwin-arm64: prepare
+	GOARCH=arm64 GOOS=darwin \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-386
@@ -139,7 +145,8 @@ distclean:
 ## setup: install revive (linter) and scc (sloc tool)
 .PHONY: setup
 setup:
-	GO111MODULE=off $(GO) get -u github.com/boyter/scc github.com/mgechev/revive
+	$(GO) install github.com/boyter/scc@latest
+	$(GO) install github.com/mgechev/revive@latest
 
 ## sloc: count "semantic lines of code"
 .PHONY: sloc
@@ -163,6 +170,7 @@ vendor:
 	$(GO) mod vendor && $(GO) mod tidy && $(GO) mod verify
 
 ## vendor-update: update vendored dependencies
+.PHONY: vendor-update
 vendor-update:
 	$(GO) get -t -u ./... && $(GO) mod vendor && $(GO) mod tidy && $(GO) mod verify
 
