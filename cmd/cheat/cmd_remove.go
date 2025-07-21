@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cheat/cheat/internal/cheatpath"
 	"github.com/cheat/cheat/internal/config"
 	"github.com/cheat/cheat/internal/sheets"
 )
@@ -13,6 +14,12 @@ import (
 func cmdRemove(opts map[string]interface{}, conf config.Config) {
 
 	cheatsheet := opts["--rm"].(string)
+
+	// validate the cheatsheet name
+	if err := cheatpath.ValidateSheetName(cheatsheet); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid cheatsheet name: %v\n", err)
+		os.Exit(1)
+	}
 
 	// load the cheatsheets
 	cheatsheets, err := sheets.Load(conf.Cheatpaths)
