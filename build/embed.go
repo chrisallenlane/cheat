@@ -8,7 +8,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,7 +22,7 @@ func main() {
 	}
 
 	// get the project root
-	root, err := filepath.Abs(cwd + "../../../")
+	root, err := filepath.Abs(filepath.Join(cwd, "..", ".."))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +53,7 @@ func main() {
 		os.Remove(filepath.Join(root, file.Out))
 
 		// read the static template
-		bytes, err := ioutil.ReadFile(filepath.Join(root, file.In))
+		bytes, err := os.ReadFile(filepath.Join(root, file.In))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,7 +63,7 @@ func main() {
 
 		// write the file to the specified outpath
 		spath := filepath.Join(root, file.Out)
-		err = ioutil.WriteFile(spath, []byte(data), 0644)
+		err = os.WriteFile(spath, []byte(data), 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
