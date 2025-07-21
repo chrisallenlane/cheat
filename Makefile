@@ -3,6 +3,9 @@ makefile := $(realpath $(lastword $(MAKEFILE_LIST)))
 cmd_dir  := ./cmd/cheat
 dist_dir := ./dist
 
+# parallel jobs for build-release (can be overridden)
+JOBS ?= 8
+
 # executables
 CAT    := cat
 COLUMN := column
@@ -49,71 +52,74 @@ build: | clean $(dist_dir) generate fmt lint vet vendor man
 	$(GO) build $(BUILD_FLAGS) -o $(dist_dir)/cheat $(cmd_dir)
 
 ## build-release: build release executables
+# Runs prepare once, then builds all binaries in parallel
+# Override jobs with: make build-release JOBS=16
 .PHONY: build-release
-build-release: $(releases)
+build-release: prepare
+	$(MAKE) -j$(JOBS) $(releases)
 
 # cheat-darwin-amd64
-$(dist_dir)/cheat-darwin-amd64: prepare
+$(dist_dir)/cheat-darwin-amd64:
 	GOARCH=amd64 GOOS=darwin \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-darwin-arm64
-$(dist_dir)/cheat-darwin-arm64: prepare
+$(dist_dir)/cheat-darwin-arm64:
 	GOARCH=arm64 GOOS=darwin \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-386
-$(dist_dir)/cheat-linux-386: prepare
+$(dist_dir)/cheat-linux-386:
 	GOARCH=386 GOOS=linux \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-amd64
-$(dist_dir)/cheat-linux-amd64: prepare
+$(dist_dir)/cheat-linux-amd64:
 	GOARCH=amd64 GOOS=linux \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-arm5
-$(dist_dir)/cheat-linux-arm5: prepare
+$(dist_dir)/cheat-linux-arm5:
 	GOARCH=arm GOOS=linux GOARM=5 \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-arm6
-$(dist_dir)/cheat-linux-arm6: prepare
+$(dist_dir)/cheat-linux-arm6:
 	GOARCH=arm GOOS=linux GOARM=6 \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-linux-arm7
-$(dist_dir)/cheat-linux-arm7: prepare
+$(dist_dir)/cheat-linux-arm7:
 	GOARCH=arm GOOS=linux GOARM=7 \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 	
 # cheat-linux-arm64
-$(dist_dir)/cheat-linux-arm64: prepare
+$(dist_dir)/cheat-linux-arm64:
 	GOARCH=arm64 GOOS=linux \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-netbsd-amd64
-$(dist_dir)/cheat-netbsd-amd64: prepare
+$(dist_dir)/cheat-netbsd-amd64:
 	GOARCH=amd64 GOOS=netbsd \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-openbsd-amd64
-$(dist_dir)/cheat-openbsd-amd64: prepare
+$(dist_dir)/cheat-openbsd-amd64:
 	GOARCH=amd64 GOOS=openbsd \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-plan9-amd64
-$(dist_dir)/cheat-plan9-amd64: prepare
+$(dist_dir)/cheat-plan9-amd64:
 	GOARCH=amd64 GOOS=plan9 \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-solaris-amd64
-$(dist_dir)/cheat-solaris-amd64: prepare
+$(dist_dir)/cheat-solaris-amd64:
 	GOARCH=amd64 GOOS=solaris \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(GZIP) $@ && chmod -x $@.gz
 
 # cheat-windows-amd64
-$(dist_dir)/cheat-windows-amd64.exe: prepare
+$(dist_dir)/cheat-windows-amd64.exe:
 	GOARCH=amd64 GOOS=windows \
 	$(GO) build $(BUILD_FLAGS) -o $@ $(cmd_dir) && $(ZIP) $@.zip $@ -j
 
