@@ -9,7 +9,7 @@ import (
 	"github.com/cheat/cheat/internal/sheets"
 )
 
-// cmdRemove opens a cheatsheet for editing (or creates it if it doesn't exist).
+// cmdRemove removes (deletes) a cheatsheet.
 func cmdRemove(opts map[string]interface{}, conf config.Config) {
 
 	cheatsheet := opts["--rm"].(string)
