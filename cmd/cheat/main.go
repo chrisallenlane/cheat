@@ -45,6 +45,7 @@ func main() {
 	// read the envvars into a map of strings
 	envvars := map[string]string{}
 	for _, e := range os.Environ() {
+		// os.Environ() guarantees "key=value" format (see ADR-002)
 		pair := strings.SplitN(e, "=", 2)
 		if runtime.GOOS == "windows" {
 			pair[0] = strings.ToUpper(pair[0])
