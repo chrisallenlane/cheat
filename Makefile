@@ -200,6 +200,15 @@ vet:
 test: 
 	$(GO) test ./...
 
+## test-integration: run integration tests (requires network)
+.PHONY: test-integration
+test-integration:
+	$(GO) test -tags=integration -count=1 ./...
+
+## test-all: run all tests (unit and integration)
+.PHONY: test-all
+test-all: test test-integration
+
 ## coverage: generate a test coverage report
 .PHONY: coverage
 coverage:

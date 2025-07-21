@@ -31,6 +31,32 @@ Run `make setup` to install `scc` and `revive`, which are used by various `make`
 
 You may run `make help` to see a list of available `make` commands.
 
+### 4. Testing
+
+#### Unit Tests
+Run unit tests with:
+```bash
+make test
+```
+
+#### Integration Tests
+Integration tests that require network access are separated using build tags. Run them with:
+```bash
+make test-integration
+```
+
+To run all tests (unit and integration):
+```bash
+make test-all
+```
+
+#### Test Coverage
+Generate a coverage report with:
+```bash
+make coverage        # HTML report
+make coverage-text   # Terminal output
+```
+
 ## Architecture Overview
 
 ### Package Structure
