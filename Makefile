@@ -209,6 +209,16 @@ test-integration:
 .PHONY: test-all
 test-all: test test-integration
 
+## test-fuzz: run quick fuzz tests for security-critical functions
+.PHONY: test-fuzz
+test-fuzz:
+	@./scripts/fuzz.sh 15s
+
+## test-fuzz-long: run extended fuzz tests (10 minutes each)
+.PHONY: test-fuzz-long
+test-fuzz-long:
+	@./scripts/fuzz.sh 10m
+
 ## coverage: generate a test coverage report
 .PHONY: coverage
 coverage:
