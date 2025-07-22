@@ -48,7 +48,7 @@ releases :=                        \
 
 ## build: build an executable for your architecture
 .PHONY: build
-build: | clean $(dist_dir) generate fmt lint vet vendor man
+build: | clean $(dist_dir) fmt lint vet vendor man
 	$(GO) build $(BUILD_FLAGS) -o $(dist_dir)/cheat $(cmd_dir)
 
 ## build-release: build release executables
@@ -127,10 +127,6 @@ $(dist_dir)/cheat-windows-amd64.exe:
 $(dist_dir):
 	$(MKDIR) $(dist_dir)
 
-.PHONY: generate
-generate:
-	$(GO) generate $(cmd_dir)
-
 ## install: build and install cheat on your PATH
 .PHONY: install
 install: build
@@ -139,7 +135,7 @@ install: build
 ## clean: remove compiled executables
 .PHONY: clean
 clean:
-	$(RM) -f $(dist_dir)/* $(cmd_dir)/str_config.go $(cmd_dir)/str_usage.go
+	$(RM) -f $(dist_dir)/*
 	$(RM) -rf .tmp
 
 ## distclean: remove the tags file
@@ -243,7 +239,7 @@ coverage-text:
 check: | vendor fmt lint vet test
 
 .PHONY: prepare
-prepare: | clean $(dist_dir) generate vendor fmt lint vet test
+prepare: | clean $(dist_dir) vendor fmt lint vet test
 
 ## docker-setup: create a docker image for use during development
 .PHONY: docker-setup
