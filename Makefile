@@ -127,6 +127,10 @@ $(dist_dir)/cheat-windows-amd64.exe:
 $(dist_dir):
 	$(MKDIR) $(dist_dir)
 
+# .tmp
+.tmp:
+	$(MKDIR) .tmp
+
 ## install: build and install cheat on your PATH
 .PHONY: install
 install: build
@@ -217,8 +221,7 @@ test-fuzz-long:
 
 ## coverage: generate a test coverage report
 .PHONY: coverage
-coverage:
-	$(MKDIR) .tmp && \
+coverage: .tmp
 	$(GO) test ./... -coverprofile=.tmp/cheat-coverage.out && \
 	$(GO) tool cover -html=.tmp/cheat-coverage.out -o .tmp/cheat-coverage.html && \
 	echo "Coverage report generated: .tmp/cheat-coverage.html" && \
@@ -229,10 +232,31 @@ coverage:
 
 ## coverage-text: show test coverage by function in terminal
 .PHONY: coverage-text
-coverage-text:
-	$(MKDIR) .tmp && \
+coverage-text: .tmp
 	$(GO) test ./... -coverprofile=.tmp/cheat-coverage.out && \
 	$(GO) tool cover -func=.tmp/cheat-coverage.out | $(SORT) -k3 -n
+
+## benchmark: run performance benchmarks
+.PHONY: benchmark
+benchmark: .tmp
+	$(GO) test -tags=integration -bench=. -benchtime=10s -benchmem ./cmd/cheat | tee .tmp/benchmark-latest.txt && \
+	$(RM) -f cheat.test
+
+## benchmark-cpu: run benchmarks with CPU profiling
+.PHONY: benchmark-cpu
+benchmark-cpu: .tmp
+	$(GO) test -tags=integration -bench=. -benchtime=10s -cpuprofile=.tmp/cpu.prof ./cmd/cheat && \
+	$(RM) -f cheat.test && \
+	echo "CPU profile saved to .tmp/cpu.prof" && \
+	echo "View with: go tool pprof -http=:8080 .tmp/cpu.prof"
+
+## benchmark-mem: run benchmarks with memory profiling
+.PHONY: benchmark-mem
+benchmark-mem: .tmp
+	$(GO) test -tags=integration -bench=. -benchtime=10s -benchmem -memprofile=.tmp/mem.prof ./cmd/cheat && \
+	$(RM) -f cheat.test && \
+	echo "Memory profile saved to .tmp/mem.prof" && \
+	echo "View with: go tool pprof -http=:8080 .tmp/mem.prof"
 
 ## check: format, lint, vet, vendor, and run unit-tests
 .PHONY: check
