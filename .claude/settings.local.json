@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(go mod:*)",
+      "Bash(time make:*)",
+      "Bash(go test:*)",
+      "Bash(go tool cover:*)",
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(go run:*)",
+      "Bash(go build:*)",
+      "Bash(./cheat:*)",
+      "Bash(realpath:*)",
+      "Bash(go generate:*)"
+    ],
+    "deny": []
+  }
+}

@@ -6,105 +6,85 @@ import (
 	"testing"
 )
 
+// TestPager tests the Pager function
 func TestPager(t *testing.T) {
-	// Save original PAGER value
-	originalPager := os.Getenv("PAGER")
-	defer os.Setenv("PAGER", originalPager)
+	// Save original env var
+	oldPager := os.Getenv("PAGER")
+	defer os.Setenv("PAGER", oldPager)
 
-	tests := []struct {
-		name     string
-		setup    func()
-		teardown func()
-		want     string
-		wantType string // "exact", "empty", or "any"
-	}{
-		{
-			name: "PAGER environment variable is respected",
-			setup: func() {
-				os.Setenv("PAGER", "/usr/bin/custom-pager")
-			},
-			teardown: func() {
-				os.Unsetenv("PAGER")
-			},
-			want:     "/usr/bin/custom-pager",
-			wantType: "exact",
-		},
-		{
-			name: "Empty PAGER is ignored",
-			setup: func() {
-				os.Setenv("PAGER", "")
-			},
-			teardown: func() {
-				os.Unsetenv("PAGER")
-			},
-			wantType: "any", // Will return system pager or empty string
-		},
-	}
+	t.Run("windows default", func(t *testing.T) {
+		if runtime.GOOS != "windows" {
+			t.Skip("skipping windows test on non-windows platform")
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Run setup if provided
-			if tt.setup != nil {
-				tt.setup()
+		os.Setenv("PAGER", "")
+		pager := Pager()
+		if pager != "more" {
+			t.Errorf("expected 'more' on windows, got %s", pager)
+		}
+	})
+
+	t.Run("PAGER env var", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("skipping non-windows test on windows platform")
+		}
+
+		os.Setenv("PAGER", "bat")
+		pager := Pager()
+		if pager != "bat" {
+			t.Errorf("expected PAGER env var value, got %s", pager)
+		}
+	})
+
+	t.Run("fallback to system pager", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("skipping non-windows test on windows platform")
+		}
+
+		os.Setenv("PAGER", "")
+		pager := Pager()
+
+		// Should find one of the fallback pagers or return empty string
+		validPagers := map[string]bool{
+			"":      true, // no pager found
+			"pager": true,
+			"less":  true,
+			"more":  true,
+		}
+
+		// Check if it's a path to one of these
+		found := false
+		for p := range validPagers {
+			if p == "" && pager == "" {
+				found = true
+				break
 			}
-
-			// Ensure teardown runs
-			if tt.teardown != nil {
-				defer tt.teardown()
+			if p != "" && (pager == p || len(pager) >= len(p) && pager[len(pager)-len(p):] == p) {
+				found = true
+				break
 			}
+		}
 
-			// Run the function
-			got := Pager()
+		if !found {
+			t.Errorf("unexpected pager value: %s", pager)
+		}
+	})
 
-			// Check the result based on type
-			switch tt.wantType {
-			case "exact":
-				if got != tt.want {
-					t.Errorf("Pager() = %v, want %v", got, tt.want)
-				}
-			case "empty":
-				if got != "" {
-					t.Errorf("Pager() = %v, want empty string", got)
-				}
-			case "any":
-				// Just verify it doesn't panic - any result is acceptable
-			}
-		})
-	}
-}
+	t.Run("no pager available", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("skipping non-windows test on windows platform")
+		}
 
-func TestPagerWindows(t *testing.T) {
-	if runtime.GOOS != "windows" {
-		t.Skip("Skipping Windows-specific test on non-Windows platform")
-	}
+		os.Setenv("PAGER", "")
 
-	// On Windows, should always return "more"
-	got := Pager()
-	want := "more"
-	if got != want {
-		t.Errorf("Pager() = %v, want %v", got, want)
-	}
-}
+		// Save and modify PATH to ensure no pagers are found
+		oldPath := os.Getenv("PATH")
+		defer os.Setenv("PATH", oldPath)
+		os.Setenv("PATH", "/nonexistent")
 
-func TestPagerUnixSystems(t *testing.T) {
-	// Skip this test on Windows
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping Unix-specific test on Windows")
-	}
-
-	// Save original PAGER value
-	originalPager := os.Getenv("PAGER")
-	defer os.Setenv("PAGER", originalPager)
-
-	// Unset PAGER to test fallback behavior
-	os.Unsetenv("PAGER")
-
-	// Call Pager() - we can't predict what will be found on the system
-	// but we can verify it doesn't panic and returns a string
-	result := Pager()
-
-	// The result should be either empty (no pager found) or a path
-	if result != "" && result[0] != '/' {
-		t.Errorf("Pager() returned %q, expected empty string or absolute path", result)
-	}
+		pager := Pager()
+		if pager != "" {
+			t.Errorf("expected empty string when no pager found, got %s", pager)
+		}
+	})
 }
